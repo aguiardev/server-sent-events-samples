@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        table {
+            width: 400px;
+            table-layout: fixed;
+        }
+
+        tr:nth-child(odd) {
+            background-color: #f8f8f8;
+            opacity: .999;
+        }
+
+        td {
+            border: 1px solid #ccc;
+        }
+
+        td {
+            position: relative;
+            text-align: center;
+        }
+
+        .ordem-compra {
+            text-align: right;
+        }
+
+        .ordem-venda {
+            text-align: left;
+        }
+
+        .bg {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            background-color: #8ef;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body onload="initialize()">
+    <h1>Book</h1>
+    <h2 id="lastUpdate" type="label"></h2>
+    <table id="myTable">
+        <tr>
+            <th>ORD</th>
+            <th>TOTAL</th>
+            <th colspan="2">OFERTAS</th>
+            <th>TOTAL</th>
+            <th>ORD</th>
+        </tr>
+        <tr>
+            <td class="ordem-compra">
+                <div class="bg" style="width: 10%"></div>14
+            </td>
+            <td>1,00K</td>
+            <td>29,04</td>
+            <td>29,04</td>
+            <td>6,20K</td>
+            <td class="ordem-venda">
+                <div class="bg" style="width: 20%"></div>6
+            </td>
+        </tr>
+        <tr>
+            <td class="ordem-compra">
+                <div class="bg" style="width: 15%"></div>15
+            </td>
+            <td>22,50K</td>
+            <td>29,03</td>
+            <td>29,06</td>
+            <td>10,40K</td>
+            <td class="ordem-venda">
+                <div class="bg" style="width: 11%"></div>18
+            </td>
+        </tr>
+    </table>
+    <br>
+
+    <script type="text/javascript">
+
+        function initialize() {
+            updateCurrentTime();
+        }
+
+        function updateCurrentTime() {
+
+            lastUpdate.innerHTML = new Date().toLocaleTimeString("pt-BR");
+        }
+
+        function updateTable(ofertas) {
+            removeAllRows();
+
+            let ofertasParsed = JSON.parse(ofertas);
+
+            lastUpdate.innerHTML = new Date(ofertasParsed.UltimaCotacao).toLocaleTimeString("pt-BR");
+
+            for (oferta of ofertasParsed.Ofertas) {
+                var row = myTable.insertRow(myTable.rows.length);
+
+                var cell1 = row.insertCell(0);
+                var cell2 = row.insertCell(1);
+                var cell3 = row.insertCell(2);
+                var cell4 = row.insertCell(3);
+                var cell5 = row.insertCell(4);
+                var cell6 = row.insertCell(5);
+
+                var { Compra, Venda } = oferta;
+
+                cell1.innerHTML = Compra.QuantidadeOrdem;
+                cell1.classList.add("ordem-compra");
+                cell2.innerHTML = `${Compra.Total.toFixed(2)}K`;
+                cell3.innerHTML = Compra.Valor.toFixed(2);
+                cell3.style.color = "green";
+                cell4.innerHTML = Venda.Valor.toFixed(2);
+                cell4.style.color = "red";
+                cell5.innerHTML = `${Venda.Total.toFixed(2)}K`;
+                cell6.innerHTML = Venda.QuantidadeOrdem;
+                cell6.classList.add("ordem-venda");
+            }
+        }
+
+        function removeAllRows() {
+            for (var i = myTable.rows.length - 1; i > 0; i--) {
+                myTable.deleteRow(i);
+            }
+        }
+
+        var source = new EventSource('https://localhost:5001/book/sse');
+
+        source.onmessage = function (event) {
+            console.log('[' + new Date().toLocaleString() + '] event: On Message');
+            console.log(event);
+
+            updateTable(event.data);
+        };
+
+        source.onopen = function (event) {
+            console.log('[' + new Date().toLocaleString() + '] event: On Open');
+            console.log(event);
+        };
+
+        source.onerror = function (event) {
+            console.log('[' + new Date().toLocaleString() + '] event: On Error');
+            console.log(event);
+        }
+    </script>
+</body>
+</html>
